@@ -59,17 +59,17 @@
         </div>
 
         <div class="section">
-            <h2>POOL'larin doluluk oranlari</h2>
+            <h2>POOL'ların doluluk oranları</h2>
             <div id="ioActivityChart1" class="chart"></div>
         </div>
 
         <div class="section">
-            <h2>(Data2)</h2>
+            <h2>Data2</h2>
             <div id="ioActivityChart2" class="chart"></div>
         </div>
 
         <div class="section">
-            <h2>(Data3)</h2>
+            <h2>Data3</h2>
             <div id="ioActivityChart3" class="chart"></div>
         </div>
     </div>
@@ -77,7 +77,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script>
-        function fetchData(file, cellRanges, callback) {
+        function fetchData(file, callback) {
             const xhr = new XMLHttpRequest();
             xhr.open('GET', file, true);
             xhr.responseType = 'arraybuffer';
@@ -86,14 +86,18 @@
                 const data = new Uint8Array(xhr.response);
                 const workbook = XLSX.read(data, { type: 'array' });
 
+                // Assuming the data is in the first sheet (modify if necessary)
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
 
-                // Extract data from specified cell ranges
-                const dates = cellRanges.map(range => worksheet[range[0]].v);
-                const ficonActivity = cellRanges.map(range => parseFloat(worksheet[range[1]].v.toString().replace(',', '.')));
-                const zHyperlinkActivity = cellRanges.map(range => parseInt(worksheet[range[2]].v.toString().replace(',', '')));
-                const averageActivity = cellRanges.map(range => parseFloat(worksheet[range[3]].v.toString().replace(',', '.')));
+                // Convert the worksheet to JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // Extract data
+                const dates = jsonData.slice(1).map(row => row[0]);
+                const ficonActivity = jsonData.slice(1).map(row => parseFloat(row[1].toString().replace(',', '.')));
+                const zHyperlinkActivity = jsonData.slice(1).map(row => parseInt(row[2].toString().replace(',', '')));
+                const averageActivity = jsonData.slice(1).map(row => parseFloat(row[3].toString().replace(',', '.')));
 
                 callback(dates, ficonActivity, zHyperlinkActivity, averageActivity);
             };
@@ -173,19 +177,19 @@
             Plotly.newPlot(chartId, chartData, layout);
         }
 
-        fetchData('M://STORAGESISTEMLERI//RMF Reports//2024_06_Haziran//14_Haziran_RMF.xlsx', [['B21', 'F21', 'C8', 'C10']], (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
+        fetchData('M://STORAGESISTEMLERI//RMF Reports//2024_06_Haziran//14_Haziran_RMF.xlsx', (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
             renderBarChart('ioActivityChart', 'FICON vs zHyperlink vs Average I/O Activity', dates, ficonActivity, zHyperlinkActivity, averageActivity);
         });
 
-        fetchData('data1.xlsx', [['A1', 'A2', 'A3', 'A4']], (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
+        fetchData('data1.xlsx', (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
             renderBarChart('ioActivityChart1', 'FICON vs zHyperlink vs Average I/O Activity (Data1)', dates, ficonActivity, zHyperlinkActivity, averageActivity);
         });
 
-        fetchData('data2.xlsx', [['B3', 'B5', 'B7', 'B9']], (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
+        fetchData('data2.xlsx', (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
             renderLineChart('ioActivityChart2', 'FICON vs zHyperlink vs Average I/O Activity (Data2)', dates, ficonActivity, zHyperlinkActivity, averageActivity);
         });
 
-        fetchData('data3.xlsx', [['F3', 'F5', 'F7', 'F9']], (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
+        fetchData('data3.xlsx', (dates, ficonActivity, zHyperlinkActivity, averageActivity) => {
             renderLineChart('ioActivityChart3', 'FICON vs zHyperlink vs Average I/O Activity (Data3)', dates, ficonActivity, zHyperlinkActivity, averageActivity);
         });
     </script>
